@@ -13,6 +13,7 @@ class Node:
 
 
 def a_star(board: list):
+    """A* pathfinding algorithm."""
     open_list = []
     closed_list = []
 
@@ -45,16 +46,13 @@ def a_star(board: list):
         closed_list.append(parent)
 
 
-def diagonal_heuristic(coordinates: tuple, end: tuple) -> int:
-    """Estimated movement cost from given square to the final destination."""
-    return max(abs(coordinates[0] - end[0]), abs(coordinates[1] - end[1]))
-
-
 def manhattan_heuristic(coordinates: tuple, end: tuple) -> int:
+    """Estimated movement cost from given square to the destination."""
     return abs(coordinates[0] - end[0]) + abs(coordinates[1] - end[1])
 
 
 def find_node(board: list, node_name: str) -> tuple:
+    """Find a node in the board and return the coordinates."""
     for row in range(len(board)):
         for col in range(len(board[row])):
             if board[row][col] == node_name:
@@ -110,46 +108,3 @@ def print_board(board: list) -> None:
             else:
                 print(f' {j} ', end='')
         print()
-
-
-if __name__ == '__main__':
-
-    test = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, START, 0, 0, 0, 0, 0, 0, 0, 0, END, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
-    test2 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, START, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, END, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-             ]
-
-    n = a_star(test2)
-
-    n = n.parent
-    while n.parent:
-        test2[n.x][n.y] = 'X'
-        n = n.parent
-
-    # X is used to denote the path from A to B
-    # * is used to denote a wall that the path cannot go through
-    # 0 is an empty spot
-    print_board(test2)

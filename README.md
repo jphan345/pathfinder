@@ -1,5 +1,5 @@
 # Pathfinder
-Find the shortest path from point A to point B.
+Find the shortest path from point A to point B using A* search algorithm.
 
 ## Instructions
 Click on the squares next to **'DRAW'** to change what you are drawing on the grid.

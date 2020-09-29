@@ -4,7 +4,6 @@ import sys
 
 
 class PathfindingGUI:
-    clock = pygame.time.Clock()
 
     EMPTY = 0
     START = 'A'
@@ -14,64 +13,67 @@ class PathfindingGUI:
     SUCCESSOR = 1
 
     DARK_BLUE = (30, 32, 40)
-    LIGHT_BLUE = (197, 235, 240)
+    BLUE = (85, 180, 217)
     WHITE = (250, 250, 250)
-    LIGHT_GRAY = (175, 175, 175)
+    LIGHT_GRAY = (140, 140, 140)
+    GRAY = (100, 100, 100)
     DARK_GRAY = (50, 50, 50)
     GREEN = (81, 138, 45)
     YELLOW = (247, 238, 166)
     RED = (148, 55, 47)
 
+    clock = pygame.time.Clock()
+
     def __init__(self, display: pygame.display):
         self.display = display
-        self.board = [[self.EMPTY for _ in range(20)] for _ in range(20)]
+        self.board_dimensions = (48, 30)
+        self.board = [[self.EMPTY for _ in range(self.board_dimensions[1])] for _ in range(self.board_dimensions[0])]
         self.draw_status = self.OBSTACLE
-        self.start_coordinates = (1, 10)
-        self.end_coordinates = (18, 10)
+        self.start_coordinates = (3, 15)
+        self.end_coordinates = (45, 15)
+        self.paths_exist = False
 
-    def draw_grid(self) -> None:
-        # starts at y = 32, ends at y = 672
+    def set_target_points(self):
         self.board[self.start_coordinates[0]][self.start_coordinates[1]] = self.START
         self.board[self.end_coordinates[0]][self.end_coordinates[1]] = self.END
 
+    def draw_grid(self) -> None:
+        self.set_target_points()
+
         def draw_square(sq_color: tuple):
             if 26 * (row + 1) < mouse_pos[0] < 26 * (row + 2) and \
-                    3 * 26 + (26 * col) < mouse_pos[1] < 3 * 26 + (26 * col) + 26:
-                pygame.draw.rect(self.display, self.LIGHT_GRAY,
-                                 ((26 * (row + 1), 3 * 26 + (26 * col)),
-                                  (25, 25)))
+                    75 + (26 * col) < mouse_pos[1] < 75 + (26 * (col + 1)):
+                pygame.draw.rect(self.display, self.LIGHT_GRAY, ((26 * (row + 1), 75 + (26 * col)), (25, 25)))
             else:
-                pygame.draw.rect(self.display, sq_color,
-                                 ((26 * (row + 1), 3 * 26 + (26 * col)),
-                                  (25, 25)))
+                pygame.draw.rect(self.display, sq_color, ((26 * (row + 1), 75 + (26 * col)), (25, 25)))
 
         mouse_pos = pygame.mouse.get_pos()
-        x, y = self.display.get_size()
-        colors = {self.EMPTY: self.WHITE, self.OBSTACLE: self.DARK_BLUE, self.SUCCESSOR: self.YELLOW,
-                  self.START: self.GREEN, self.END: self.RED, self.PATH: self.LIGHT_BLUE}
+        colors = {self.EMPTY: self.WHITE, self.OBSTACLE: self.DARK_GRAY, self.SUCCESSOR: self.YELLOW,
+                  self.START: self.GREEN, self.END: self.RED, self.PATH: self.BLUE}
         for row in range(len(self.board)):
             for col in range(len(self.board[row])):
                 draw_square(colors[self.board[row][col]])
 
     def draw_obstacle(self):
-        button_font = pygame.font.SysFont('freesansbold.ttf', 48)
-
+        if self.paths_exist:
+            self.reset()
         mouse_pos = pygame.mouse.get_pos()
-        x, y = self.display.get_size()
-        if 26 < mouse_pos[0] < 21 * 26 and 3 * 26 < mouse_pos[1] < 23 * 26:
+        row = len(self.board)
+        col = len(self.board[row - 1])
+        if 26 < mouse_pos[0] < (row + 1) * 26 and 75 < mouse_pos[1] < 75 + col * 26:
             a = (mouse_pos[0] - 26) // 26
-            b = (mouse_pos[1] - 3 * 26) // 26
+            b = (mouse_pos[1] - 75) // 26
             if self.board[a][b] not in {self.START, self.END} and self.draw_status not in {self.START, self.END}:
                 self.board[a][b] = self.draw_status
 
-            self.display.blit(button_font.render(str((a, b)), True, self.WHITE), (0, 0))
-
     def draw_points(self):
         mouse_pos = pygame.mouse.get_pos()
+        row = len(self.board)
+        col = len(self.board[row - 1])
         if self.draw_status in {self.START, self.END} and \
-                26 < mouse_pos[0] < 21 * 26 - 8 and 3 * 26 < mouse_pos[1] < 23 * 26 - 8:
+                26 < mouse_pos[0] < (row + 1) * 26 and 75 < mouse_pos[1] < 75 + col * 26:
             a = (mouse_pos[0] - 26) // 26
-            b = (mouse_pos[1] - 3 * 26) // 26
+            b = (mouse_pos[1] - 75) // 26
             if self.draw_status == self.START:
                 self.board[self.start_coordinates[0]][self.start_coordinates[1]] = self.EMPTY
                 self.start_coordinates = a, b
@@ -82,40 +84,44 @@ class PathfindingGUI:
     def draw_buttons(self):
         mouse_pos = pygame.mouse.get_pos()
         button_font = pygame.font.SysFont('freesansbold.ttf', 48)
+        button_font_2 = pygame.font.SysFont('freesansbold.ttf', 42)
+        shadow = pygame.Surface((160, 55))
+        shadow.fill(self.DARK_BLUE)
+        shadow.set_alpha(90)
 
-        for i in range(2):
-            if 810 + (135 * i) < mouse_pos[0] < 925 + (135 * i) and 497 < mouse_pos[1] < 572:
-                pygame.draw.rect(self.display, self.LIGHT_GRAY, (800 + (135 * i), 487, 135, 95))
-            pygame.draw.rect(self.display, self.WHITE, (810 + (135 * i), 497, 115, 75))
+        pygame.draw.rect(self.display, self.RED, ((570, 10), (160, 55)))
+        pygame.draw.rect(self.display, self.WHITE, ((780, 15), (140, 45)))
 
         self.draw_draw_menu()
 
-        self.display.blit(button_font.render('GO', True, self.DARK_BLUE), (841, 519))
-        self.display.blit(button_font.render('RESET', True, self.DARK_BLUE), (946, 519))
+        self.display.blit(button_font.render('SEARCH', True, self.WHITE), (579, 22))
+        self.display.blit(button_font_2.render('RESET', True, self.DARK_BLUE), (803, 25))
+        if 570 < mouse_pos[0] < 730 and 10 < mouse_pos[1] < 65:
+            self.display.blit(shadow, (570, 10))
+        if 780 < mouse_pos[0] < 920 and 15 < mouse_pos[1] < 60:
+            self.display.blit(shadow, (780, 10))
 
     def draw_draw_menu(self):
-        modes = [(self.START, 0, self.GREEN, 'START'), (self.END, 1, self.RED, 'END'),
-                 (self.OBSTACLE, 2, self.DARK_GRAY, 'WALL'), (self.EMPTY, 3, self.DARK_BLUE, 'ERASE')]
+        modes = [(self.START, 0, self.GREEN, 'START'), (self.END, 1, self.RED, '  END'),
+                 (self.OBSTACLE, 2, self.DARK_GRAY, ' WALL'), (self.EMPTY, 3, self.WHITE, 'ERASE')]
 
-        title_font = pygame.font.SysFont('freesansbold.ttf', 60)
-        button_font = pygame.font.SysFont('freesansbold.ttf', 48)
-        pygame.draw.rect(self.display, self.WHITE, (810, 97, 250, 360))
-        self.display.blit(title_font.render('DRAW', True, self.DARK_BLUE), (870, 117))
+        title_font = pygame.font.SysFont('freesansbold.ttf', 48)
+        button_font = pygame.font.SysFont('freesansbold.ttf', 24)
+        self.display.blit(title_font.render('DRAW:', True, self.WHITE), (25, 33))
 
         mouse_pos = pygame.mouse.get_pos()
         for mode, i, color, title in modes:
             if mode == self.draw_status:
-                pygame.draw.rect(self.display, self.LIGHT_GRAY, (830, 167 + (70 * i), 210, 70))
-
-            if 810 < mouse_pos[0] < 1060 and 167 + (70 * i) < mouse_pos[1] < 227 + (70 * i):
-                pygame.draw.rect(self.display, self.LIGHT_GRAY, (830, 167 + (70 * i), 210, 70))
-            pygame.draw.rect(self.display, color, (840, 177 + (70 * i), 50, 50))
-            self.display.blit(button_font.render(title, True, self.DARK_BLUE), (910, 187 + (70 * i)))
-
-        pygame.draw.rect(self.display, self.WHITE, (841, 388, 48, 48))
+                pygame.draw.rect(self.display, self.GRAY, (157 + (70 * i), 5, 70, 65))
+            if 157 + (70 * i) < mouse_pos[0] < 227 + (70 * i) and 5 < mouse_pos[1] < 70:
+                pygame.draw.rect(self.display, self.LIGHT_GRAY, (157 + (70 * i), 5, 70, 65))
+            pygame.draw.rect(self.display, color, (180 + (70 * i), 15, 25, 25))
+            self.display.blit(button_font.render(title, True, self.WHITE), (165 + (70 * i), 48))
 
     def solve(self):
-        self.reset()
+        if self.paths_exist:
+            self.reset()
+        self.paths_exist = True
         node = self.a_star()
         self.clock.tick(45)
         if node:
@@ -167,19 +173,26 @@ class PathfindingGUI:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
-                    if 945 < mouse_pos[0] < 1060 and 497 < mouse_pos[1] < 572:
+                    if 780 < mouse_pos[0] < 920 and 15 < mouse_pos[1] < 60:
                         open_list = []
                         self.reset()
             closed_list.append(parent)
 
     def reset(self):
-        self.board = \
-            [[self.EMPTY if self.board[i][j] != self.OBSTACLE else self.OBSTACLE for j in range(20)] for i in range(20)]
+        x, y = self.board_dimensions
+        if self.paths_exist:
+            self.board = \
+                [[self.EMPTY if self.board[i][j] != self.OBSTACLE else self.OBSTACLE for j in range(y)] for i in
+                 range(x)]
+            self.paths_exist = False
+        else:
+            self.board = [[self.EMPTY for _ in range(y)] for _ in range(x)]
+        self.set_target_points()
 
 
 def main():
     pygame.init()
-    display_size = (1200, 810)
+    display_size = (1300, 880)
     display = pygame.display.set_mode(display_size)
     pathfinding = PathfindingGUI(display)
 
@@ -196,14 +209,13 @@ def main():
                 mouse_pos = pygame.mouse.get_pos()
                 for i in range(4):
                     status = {0: pathfinding.START, 1: pathfinding.END, 2: pathfinding.OBSTACLE, 3: pathfinding.EMPTY}
-                    if 810 < mouse_pos[0] < 1060 and 167 + (70 * i) < mouse_pos[1] < 227 + (70 * i):
+                    if 157 + (70 * i) < mouse_pos[0] < 227 + (70 * i) and 5 < mouse_pos[1] < 70:
                         pathfinding.draw_status = status[i]
-                if 810 < mouse_pos[0] < 925 and 497 < mouse_pos[1] < 572:
+                if 570 < mouse_pos[0] < 730 and 10 < mouse_pos[1] < 65:
                     pathfinding.solve()
-                if 945 < mouse_pos[0] < 1060 and 497 < mouse_pos[1] < 572:
+                if 780 < mouse_pos[0] < 920 and 15 < mouse_pos[1] < 60:
                     pathfinding.reset()
-                if 26 < mouse_pos[0] < 21 * 26 - 8 and \
-                        3 * 26 < mouse_pos[1] < 23 * 26 - 8:
+                if 26 < mouse_pos[0] < 49 * 26 and 75 < mouse_pos[1] < 75 + 30 * 26:
                     pathfinding.draw_points()
         if pygame.mouse.get_pressed()[0]:
             pathfinding.draw_obstacle()

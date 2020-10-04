@@ -3,6 +3,7 @@
 START = 'A'
 END = 'B'
 OBSTACLE = '*'
+WEIGHT = 'W'
 
 
 class Node:
